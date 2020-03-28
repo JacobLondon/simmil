@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="pse">
+      <UniqueIdentifier>{26887f03-172c-404f-bd83-f073a21a5b9f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="simmil">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\pse\colors.hpp">
+      <Filter>pse</Filter>
+    </ClInclude>
+    <ClInclude Include="src\pse\ctx.hpp">
+      <Filter>pse</Filter>
+    </ClInclude>
+    <ClInclude Include="src\pse\pse.hpp">
+      <Filter>pse</Filter>
+    </ClInclude>
+    <ClInclude Include="src\pse\types.hpp">
+      <Filter>pse</Filter>
+    </ClInclude>
+    <ClInclude Include="src\pse\util.hpp">
+      <Filter>pse</Filter>
+    </ClInclude>
+    <ClInclude Include="src\modules.hpp">
+      <Filter>simmil</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\pse\ctx.cpp">
+      <Filter>pse</Filter>
+    </ClCompile>
+    <ClCompile Include="src\pse\ctx_draw.cpp">
+      <Filter>pse</Filter>
+    </ClCompile>
+    <ClCompile Include="src\pse\types.cpp">
+      <Filter>pse</Filter>
+    </ClCompile>
+    <ClCompile Include="src\pse\util.cpp">
+      <Filter>pse</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mil.cpp">
+      <Filter>simmil</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp">
+      <Filter>simmil</Filter>
+    </ClCompile>
+    <ClCompile Include="src\demo.cpp">
+      <Filter>simmil</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
