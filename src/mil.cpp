@@ -85,10 +85,9 @@ void WorldData::tile_load(TileName name, int gridwidth, int gridheight, const ch
 }
 
 /**
- * Place something on the the default tile.
+ * Place something on the the default tile or tile with a null definition.
  * Tiles CANNOT be placed on any other tile.
- * All tiles that the new tile takes up MUST
- * be the default tile.
+ * All tiles that the new tile takes up MUST be the default tile.
  */
 void WorldData::tile_place(TileName name, int wx, int wy)
 {
@@ -98,10 +97,13 @@ void WorldData::tile_place(TileName name, int wx, int wy)
 
     // this cell already has something in it,
     // don't put something unless it is removed
-    if (world[wy * world_width + wx].definition != defaultdef) {
+    if (world[wy * world_width + wx].definition != nullptr &&
+        world[wy * world_width + wx].definition != defaultdef)
+    {
         return;
     }
 
+    //printf("%d, %d: owned: %p, def: %p\n", wx, wy, owner->owner, owner->definition);
     // can't place it, object reaches out of bounds
     if (wx + definitions[name].size.x >= world_width ||
         wy + definitions[name].size.y >= world_height)
@@ -112,7 +114,9 @@ void WorldData::tile_place(TileName name, int wx, int wy)
     // ensure all tiles in the shape of the object are the default definition
     for (int i = wy; i < wy + definitions[name].size.y; i++) {
         for (int j = wx; j < wx + definitions[name].size.x; j++) {
-            if (world[i * world_width + j].definition != defaultdef) {
+            if (world[wy * world_width + wx].definition != nullptr &&
+                world[i * world_width + j].definition != defaultdef)
+            {
                 return;
             }
         }
@@ -175,11 +179,18 @@ void WorldData::tile_draw(int wx, int wy)
     }
 
     ivec2 screen_coords = world_to_screen(wx, wy);
-    int id = world[wy * world_width + wx].definition->id;
-    int tiles_wide = world[wy * world_width + wx].definition->size.x;
-    int tiles_tall = world[wy * world_width + wx].definition->size.y;
+    int& id = world[wy * world_width + wx].definition->id;
+    int& w = tile_size.x;
+    int& h = tile_size.y;
+    int& gx = world[wy * world_width + wx].definition->size.x;
+    int& gy = world[wy * world_width + wx].definition->size.y;
 
-    ctx.draw_image(id, SDL_Rect{ screen_coords.x, screen_coords.y, tile_size.x * tiles_wide, tile_size.y * tiles_tall });
+    int sx = screen_coords.x - w / 2 * gy;
+    int sy = screen_coords.y;
+    int sw = w / 2 * gy + w / 2 * gx;
+    int sh = h / 2 * gx + h / 2 * gy;
+
+    ctx.draw_image(id, SDL_Rect{ sx, sy, sw, sh });
 }
 
 ivec2 WorldData::world_to_screen(int wx, int wy)
@@ -194,7 +205,7 @@ void WorldData::setup()
 {
     // LOAD IMAGES IN THE SAME ORDER AS enum TileName
     tile_load(TILE_GRASS, 1, 1, "assets/tile_grass.png");
-    tile_load(BUILDING_TENT, 2, 2, "assets/buildings_tent.png");
+    tile_load(BUILDING_TENT, 3, 1, "assets/test3x1.png");
 
     // fill the world with the DEFAULT TILE DEFINITION
     // set the world_coords for each tile manager
@@ -203,6 +214,12 @@ void WorldData::setup()
             tile_place(defaultdef->name, j, i);
         }
     }
+
+    
+    tile_place(BUILDING_TENT, 0, 1);
+    tile_place(BUILDING_TENT, 0, 3);
+    tile_place(BUILDING_TENT, 2, 3);
+    tile_place(BUILDING_TENT, 4, 3);
 
 }
 
@@ -246,10 +263,6 @@ void WorldData::update()
 
     for (int wy = 0; wy < world_height; wy++) {
         for (int wx = 0; wx < world_width; wx++) {
-            /*ivec2 screen = world_to_screen(wx, wy);
-
-            int& id = world[wy][wx];
-            ctx.draw_image(id, SDL_Rect{ screen.x, screen.y, tile_size.x, tile_size.y });*/
             tile_draw(wx, wy);
         }
     }
