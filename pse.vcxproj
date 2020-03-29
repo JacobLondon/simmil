@@ -32,7 +32,6 @@
     <ClCompile Include="src\mil.cpp" />
     <ClCompile Include="src\pse\ctx.cpp" />
     <ClCompile Include="src\pse\ctx_draw.cpp" />
-    <ClCompile Include="src\pse\types.cpp" />
     <ClCompile Include="src\pse\util.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

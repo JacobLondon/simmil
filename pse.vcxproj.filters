@@ -40,9 +40,6 @@
     <ClCompile Include="src\pse\ctx_draw.cpp">
       <Filter>pse</Filter>
     </ClCompile>
-    <ClCompile Include="src\pse\types.cpp">
-      <Filter>pse</Filter>
-    </ClCompile>
     <ClCompile Include="src\pse\util.cpp">
       <Filter>pse</Filter>
     </ClCompile>
