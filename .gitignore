@@ -8,7 +8,6 @@ Release/
 Debug/
 
 *.o
-pse
 
 # allow for includes
 !/lib/x64
