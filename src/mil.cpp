@@ -203,7 +203,7 @@ ivec2 WorldData::world_to_screen(int wx, int wy)
 void WorldData::setup()
 {
     // LOAD IMAGES IN THE SAME ORDER AS enum TileName
-    tile_load(TILE_GRASS, 1, 1, "assets/tile_grass.png");
+    tile_load(TILE_GRASS, 1, 1, "assets/test1x1.png");
     tile_load(BUILDING_TENT, 2, 2, "assets/test2x2.png");
 
     // fill the world with the DEFAULT TILE DEFINITION
@@ -258,12 +258,6 @@ void WorldData::update()
     else if (point_in_triangle(mouse_offset, downright)) {
         mouse_selected.add(1, 0);
     }
-
-    /*for (int wy = 0; wy < world_height; wy++) {
-        for (int wx = 0; wx < world_width; wx++) {
-            tile_draw(wx, wy);
-        }
-    }*/
 
     for (int sum = 0; sum < world_width + world_height - 1; sum++) {
         for (int wx = 0; wx <= sum; wx++) {
