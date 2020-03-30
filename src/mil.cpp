@@ -4,9 +4,19 @@
 
 using namespace pse;
 
+// FIRST ITEM is DEFAULT
 enum TileName {
     TILE_GRASS,
-    BUILDING_TENT,
+    TILE_BUILDING_TENT,
+    TILE_HIGHLIGHT_MOUSE,
+    TILE_ROAD_DIRT_STRAIGHT_NS,
+    TILE_ROAD_DIRT_CORNER_NE,
+    TILE_ROAD_DIRT_CORNER_SE,
+    TILE_ROAD_DIRT_CORNER_SW,
+    TILE_ROAD_DIRT_CORNER_NW,
+    TILE_TEST_11,
+    TILE_TEST_22,
+    TILE_TEST_31,
     TILE_COUNT
 };
 
@@ -104,8 +114,8 @@ void WorldData::tile_place(TileName name, int wx, int wy)
     }
 
     // can't place it, object reaches out of bounds
-    if (wx + definitions[name].size.x >= world_width ||
-        wy + definitions[name].size.y >= world_height)
+    if (wx + definitions[name].size.x > world_width ||
+        wy + definitions[name].size.y > world_height)
     {
         return;
     }
@@ -184,7 +194,7 @@ void WorldData::tile_draw(int wx, int wy)
     int& gx = world[wy * world_width + wx].definition->size.x;
     int& gy = world[wy * world_width + wx].definition->size.y;
 
-    int sx = screen_coords.x - w / 2 * gy;
+    int sx = screen_coords.x - w / 2 * gy + w / 2;
     int sy = screen_coords.y;
     int sw = w / 2 * gy + w / 2 * gx;
     int sh = h / 2 * gx + h / 2 * gy;
@@ -203,8 +213,17 @@ ivec2 WorldData::world_to_screen(int wx, int wy)
 void WorldData::setup()
 {
     // LOAD IMAGES IN THE SAME ORDER AS enum TileName
-    tile_load(TILE_GRASS, 1, 1, "assets/test1x1.png");
-    tile_load(BUILDING_TENT, 2, 2, "assets/test2x2.png");
+    tile_load(TILE_GRASS, 1, 1, "assets/tile_grass_1x1.png");
+    tile_load(TILE_BUILDING_TENT, 2, 2, "assets/buildings_tent_2x2.png");
+    tile_load(TILE_HIGHLIGHT_MOUSE, 1, 1, "assets/hilite_mouse_1x1.png");
+    tile_load(TILE_ROAD_DIRT_STRAIGHT_NS, 1, 1, "assets/road_dirt_straight_ns_1x1.png");
+    tile_load(TILE_ROAD_DIRT_CORNER_NE, 1, 1, "assets/road_dirt_corner_ne_1x1.png");
+    tile_load(TILE_ROAD_DIRT_CORNER_SE, 1, 1, "assets/road_dirt_corner_se_1x1.png");
+    tile_load(TILE_ROAD_DIRT_CORNER_SW, 1, 1, "assets/road_dirt_corner_sw_1x1.png");
+    tile_load(TILE_ROAD_DIRT_CORNER_NW, 1, 1, "assets/road_dirt_corner_nw_1x1.png");
+    tile_load(TILE_TEST_11, 1, 1, "assets/test_1x1.png");
+    tile_load(TILE_TEST_22, 2, 2, "assets/test_2x2.png");
+    tile_load(TILE_TEST_31, 3, 1, "assets/test_3x1.png");
 
     // fill the world with the DEFAULT TILE DEFINITION
     // set the world_coords for each tile manager
@@ -214,10 +233,28 @@ void WorldData::setup()
         }
     }
 
-    
-    tile_place(BUILDING_TENT, 2, 0);
-    tile_place(BUILDING_TENT, 0, 1);
-    tile_place(BUILDING_TENT, 2, 2);
+    tile_place(TILE_BUILDING_TENT, 2, 0);
+    tile_place(TILE_ROAD_DIRT_STRAIGHT_NS, 3, 3);
+    tile_place(TILE_ROAD_DIRT_STRAIGHT_NS, 3, 4);
+    tile_place(TILE_ROAD_DIRT_STRAIGHT_NS, 3, 5);
+    tile_place(TILE_ROAD_DIRT_CORNER_NE, 3, 6);
+    tile_place(TILE_ROAD_DIRT_STRAIGHT_NS, 4, 6);
+    tile_place(TILE_ROAD_DIRT_STRAIGHT_NS, 5, 6);
+    tile_place(TILE_ROAD_DIRT_CORNER_SW, 6, 6);
+    tile_place(TILE_ROAD_DIRT_STRAIGHT_NS, 6, 7);
+    tile_place(TILE_ROAD_DIRT_STRAIGHT_NS, 6, 8);
+    tile_place(TILE_ROAD_DIRT_STRAIGHT_NS, 6, 9);
+
+    tile_place(TILE_ROAD_DIRT_CORNER_SE, 0, 0);
+    tile_place(TILE_ROAD_DIRT_CORNER_SW, 1, 0);
+    tile_place(TILE_ROAD_DIRT_CORNER_NW, 1, 1);
+    tile_place(TILE_ROAD_DIRT_CORNER_NE, 0, 1);
+
+    tile_place(TILE_TEST_11, 7, 2);
+    tile_place(TILE_TEST_11, 7, 4);
+    tile_place(TILE_TEST_22, 3, 7);
+    tile_place(TILE_TEST_22, 1, 7);
+    tile_place(TILE_TEST_31, 6, 1);
 
 }
 
@@ -259,15 +296,22 @@ void WorldData::update()
         mouse_selected.add(1, 0);
     }
 
-    for (int sum = 0; sum < world_width + world_height - 1; sum++) {
-        for (int wx = 0; wx <= sum; wx++) {
-            tile_draw(wx, sum - wx);
+    for (int wy = 0; wy < world_height; wy++) {
+        for (int wx = 0; wx < world_width; wx++) {
+            tile_draw(wx, wy);
         }
     }
 
+    /*for (int sum = 0; sum < world_width + world_height - 1; sum++) {
+        for (int wx = 0; wx <= sum; wx++) {
+            tile_draw(wx, sum - wx);
+        }
+    }*/
+
     if (mouse_selected.x >= 0 && mouse_selected.x < world_width && mouse_selected.y >= 0 && mouse_selected.y < world_height) {
         ivec2 selected_screen = world_to_screen(mouse_selected.x, mouse_selected.y);
-        ctx.draw_image(BUILDING_TENT, SDL_Rect{ selected_screen.x - tile_size.x, selected_screen.y - tile_size.y, tile_size.x * 2, tile_size.y * 2 });
+        ctx.draw_image(TILE_HIGHLIGHT_MOUSE, SDL_Rect{ selected_screen.x, selected_screen.y, tile_size.x, tile_size.y });
+        printf("Mouse: (%d, %d)\r", mouse_selected.x, mouse_selected.y);
     }
 
     //ctx.draw_rect(Red, SDL_Rect{ mouse_cell.x * tile_size.x, mouse_cell.y * tile_size.y, tile_size.x, tile_size.y });
