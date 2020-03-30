@@ -10,6 +10,7 @@ namespace pse {
 #define US_PER_S 1000000.0
 
 context::context(const char* title, int w, int h, size_t fps)
+: screen_width{w}, screen_height{h}
 {
     SDL_Init(SDL_INIT_EVERYTHING);
     
@@ -29,6 +30,9 @@ void context::set_window(const char *title, int w, int h, unsigned int flags)
         SDL_DestroyRenderer(renderer);
         SDL_DestroyWindow(window);
     }
+
+    screen_width = w;
+    screen_height = h;
 
     window = SDL_CreateWindow(
         title,

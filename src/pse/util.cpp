@@ -88,6 +88,7 @@ char* file_read(const char* fname)
 {
     char* buf = NULL;
     long length;
+    int bytes;
     FILE* f = fopen(fname, "rb");
 
     if (f) {
@@ -96,7 +97,8 @@ char* file_read(const char* fname)
         fseek(f, 0, SEEK_SET);
         buf = (char *)malloc(length);
         if (buf) {
-            (void)fread(buf, 1, length, f);
+            bytes = fread(buf, 1, length, f);
+            (void)bytes;
         }
         fclose(f);
     }

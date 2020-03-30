@@ -50,14 +50,14 @@ struct WorldData {
 
     ivec2 tile_size; // tile width and height in pixels
     ivec2 world_origin;
-    size_t world_height;
-    size_t world_width;
+    int world_height;
+    int world_width;
 private:
     TileDefinition definitions[TILE_COUNT];
     TileDefinition *defaultdef = definitions;
 
 public:
-    WorldData(context& ctx, size_t height, size_t width);
+    WorldData(context& ctx, int height, int width);
     ~WorldData();
     void setup();
     void update();
@@ -68,7 +68,7 @@ public:
     void tile_draw(int wx, int wy);
 };
 
-WorldData::WorldData(context& ctx, size_t height, size_t width)
+WorldData::WorldData(context& ctx, int height, int width)
 : ctx{ctx}, tile_size{90, 45}, world_origin{width / 2, 1}, world_height(height), world_width(width)
 {
     world = new TileManager[world_height * world_width];
@@ -103,7 +103,6 @@ void WorldData::tile_place(TileName name, int wx, int wy)
         return;
     }
 
-    //printf("%d, %d: owned: %p, def: %p\n", wx, wy, owner->owner, owner->definition);
     // can't place it, object reaches out of bounds
     if (wx + definitions[name].size.x >= world_width ||
         wy + definitions[name].size.y >= world_height)
@@ -205,7 +204,7 @@ void WorldData::setup()
 {
     // LOAD IMAGES IN THE SAME ORDER AS enum TileName
     tile_load(TILE_GRASS, 1, 1, "assets/tile_grass.png");
-    tile_load(BUILDING_TENT, 3, 1, "assets/test3x1.png");
+    tile_load(BUILDING_TENT, 2, 2, "assets/test2x2.png");
 
     // fill the world with the DEFAULT TILE DEFINITION
     // set the world_coords for each tile manager
@@ -216,10 +215,9 @@ void WorldData::setup()
     }
 
     
+    tile_place(BUILDING_TENT, 2, 0);
     tile_place(BUILDING_TENT, 0, 1);
-    tile_place(BUILDING_TENT, 0, 3);
-    tile_place(BUILDING_TENT, 2, 3);
-    tile_place(BUILDING_TENT, 4, 3);
+    tile_place(BUILDING_TENT, 2, 2);
 
 }
 
@@ -261,9 +259,15 @@ void WorldData::update()
         mouse_selected.add(1, 0);
     }
 
-    for (int wy = 0; wy < world_height; wy++) {
+    /*for (int wy = 0; wy < world_height; wy++) {
         for (int wx = 0; wx < world_width; wx++) {
             tile_draw(wx, wy);
+        }
+    }*/
+
+    for (int sum = 0; sum < world_width + world_height - 1; sum++) {
+        for (int wx = 0; wx <= sum; wx++) {
+            tile_draw(wx, sum - wx);
         }
     }
 
