@@ -12,7 +12,7 @@ int main(int argc, char **argv)
     if (arg_check(argc, argv, "--demo")) {
         ctx.run(demo_setup, demo_update, NULL);
     }
-    else if (arg_check(argc, argv, "--mil")) {
+    else {
         ctx.run(simmil_setup, simmil_update, simmil_cleanup);
     }
 
