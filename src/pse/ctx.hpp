@@ -29,7 +29,15 @@ public:
     std::vector<SDL_Texture *> textures{};
 
     // input devices
-    ivec2 mouse{0, 0};
+    struct {
+        int x = 0;
+        int y = 0;
+        bool lclick = false;
+        bool rclick = false;
+        bool mclick = false;
+        bool scrolldown = false;
+        bool scrollup = false;
+    } mouse;
     unsigned char *keystate = nullptr;
 
     // frame stats

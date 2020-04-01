@@ -60,6 +60,7 @@ struct WorldData {
 
     ivec2 tile_size; // tile width and height in pixels
     ivec2 world_origin;
+    ivec2 screen_offset;
     int world_height;
     int world_width;
 private:
@@ -205,8 +206,8 @@ void WorldData::tile_draw(int wx, int wy)
 ivec2 WorldData::world_to_screen(int wx, int wy)
 {
     return ivec2{
-        (world_origin.x * tile_size.x) + (wx - wy) * (tile_size.x / 2),
-        (world_origin.y * tile_size.y) + (wx + wy) * (tile_size.y / 2)
+        (world_origin.x * tile_size.x) + (wx - wy) * (tile_size.x / 2) + screen_offset.x,
+        (world_origin.y * tile_size.y) + (wx + wy) * (tile_size.y / 2) + screen_offset.y
     };
 }
 
@@ -261,8 +262,8 @@ void WorldData::setup()
 void WorldData::update()
 {
     ivec2 mouse{ ctx.mouse.x, ctx.mouse.y };
-    ivec2 mouse_cell{ mouse.x / tile_size.x, mouse.y / tile_size.y };
-    ivec2 mouse_offset{ mouse.x % tile_size.x, mouse.y % tile_size.y };
+    ivec2 mouse_cell{ (mouse.x - screen_offset.x) / tile_size.x, (mouse.y - screen_offset.y) / tile_size.y };
+    ivec2 mouse_offset{ (mouse.x - screen_offset.x) % tile_size.x, (mouse.y - screen_offset.y) % tile_size.y };
     ivec2 mouse_selected{
         (mouse_cell.y - world_origin.y) + (mouse_cell.x - world_origin.x),
         (mouse_cell.y - world_origin.y) - (mouse_cell.x - world_origin.x)
@@ -311,8 +312,43 @@ void WorldData::update()
     if (mouse_selected.x >= 0 && mouse_selected.x < world_width && mouse_selected.y >= 0 && mouse_selected.y < world_height) {
         ivec2 selected_screen = world_to_screen(mouse_selected.x, mouse_selected.y);
         ctx.draw_image(TILE_HIGHLIGHT_MOUSE, SDL_Rect{ selected_screen.x, selected_screen.y, tile_size.x, tile_size.y });
-        printf("Mouse: (%d, %d)\r", mouse_selected.x, mouse_selected.y);
+        //printf("Mouse: (%d, %d)\r", mouse_selected.x, mouse_selected.y);
     }
+
+    static int ox = 0;
+    static int oy = 0;
+    static int state = 0;
+
+    switch (state) {
+    case 0:
+        if (ctx.mouse.lclick) {
+            ox = mouse.x;
+            oy = mouse.y;
+            state = 1;
+        }
+        else {
+            ox = 0;
+            oy = 0;
+        }
+        break;
+    case 1:
+        if (ctx.mouse.lclick) {
+            screen_offset.add((mouse.x - ox), (mouse.y - oy));
+            ox = mouse.x;
+            oy = mouse.y;
+        }
+        else {
+            ox = 0;
+            oy = 0;
+            state = 0;
+        }
+    }
+
+    // TODO: Actually add a bounds checker
+    if (ctx.check_key_invalidate(SDL_SCANCODE_SPACE)) {
+        screen_offset = ivec2{0, 0};
+    }
+    //printf("%d, %d\n", screen_offset.x, screen_offset.y);
 
     //ctx.draw_rect(Red, SDL_Rect{ mouse_cell.x * tile_size.x, mouse_cell.y * tile_size.y, tile_size.x, tile_size.y });
 }

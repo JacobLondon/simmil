@@ -70,19 +70,62 @@ void context::run(void (*setup)(context& ctx), void (*update)(context& ctx), voi
     double frame_time = 0.0;
     auto frame_time_next = time_now();
     auto frame_time_diff = time_now() - frame_time_next;
+    bool scroll_happened = false;
 
     setup(*this);
 
     while (!done) {
+        scroll_happened = false;
         // keys
         while (SDL_PollEvent(&event)) {
             switch (event.type) {
             case SDL_QUIT:
                 done = true;
                 break;
+            case SDL_MOUSEBUTTONDOWN:
+                switch (event.button.button) {
+                case SDL_BUTTON_LEFT:
+                    mouse.lclick = true;
+                    break;
+                case SDL_BUTTON_MIDDLE:
+                    mouse.mclick = true;
+                    break;
+                case SDL_BUTTON_RIGHT:
+                    mouse.rclick = true;
+                    break;
+                }
+                break;
+            case SDL_MOUSEBUTTONUP:
+                switch (event.button.button) {
+                case SDL_BUTTON_LEFT:
+                    mouse.lclick = false;
+                    break;
+                case SDL_BUTTON_MIDDLE:
+                    mouse.mclick = false;
+                    break;
+                case SDL_BUTTON_RIGHT:
+                    mouse.rclick = false;
+                    break;
+                }
+                break;
+            case SDL_MOUSEWHEEL:
+                if (event.wheel.y > 0) {
+                    mouse.scrollup = true;
+                    mouse.scrolldown = false;
+                }
+                else if (event.wheel.y < 0) {
+                    mouse.scrolldown = true;
+                    mouse.scrollup = false;
+                }
+                scroll_happened = true;
+                break;
             default:
                 break;
             }
+        }
+        if (!scroll_happened) {
+            mouse.scrollup = false;
+            mouse.scrolldown = false;
         }
         SDL_GetMouseState(&mouse.x, &mouse.y);
         SDL_PumpEvents();
