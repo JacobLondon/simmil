@@ -16,7 +16,11 @@ struct vec2 {
         this->x += x;
         this->y += y;
     }
-
+    void sub(T x, T y)
+    {
+        this->x -= x;
+        this->y -= y;
+    }
 };
 
 template<typename T>
