@@ -3,6 +3,7 @@
 #include <time.h>
 #include <vector>
 
+#include "component.hpp"
 #include "types.hpp"
 
 namespace pse {
@@ -27,7 +28,7 @@ private:
     SDL_Event event = {0};
 public:
     std::vector<SDL_Texture *> textures{};
-    std::vector<component> components{};
+    std::vector<component *> components{};
     
     // Input Devices
     struct {
@@ -62,6 +63,8 @@ public:
     bool check_key(int sdl_scancode);
     bool check_key_invalidate(int sdl_scancode);
     void quit();
+
+    void component_add(component *c);
 
     int load_image(const char *path); // put an image into textures, return its ID
     void draw_image(int id, SDL_Rect rect); // draw an image to coordinates

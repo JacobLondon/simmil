@@ -69,8 +69,10 @@ struct WorldData {
     ivec2 screen_tilesize; // tile width and height in pixels
     ivec2 world_origin;
     ivec2 screen_offset;
-    int world_height;
-    int world_width;
+    int world_height; // grids of the world tall
+    int world_width; // grids of the world wide
+    component *menu_component; // managed by the context
+    component *world_component; // managed by the context
 private:
     TileDefinition definitions[TILE_COUNT];
     TileDefinition *defaultdef = definitions;
@@ -88,9 +90,16 @@ public:
 };
 
 WorldData::WorldData(context& ctx, int height, int width)
-: ctx{ctx}, screen_tilesize{90, 45}, world_origin{width / 2, 1}, world_height(height), world_width(width)
+: ctx{ctx}, screen_tilesize{90, 45}, world_origin{width / 2, 1}, world_height(height), world_width(width),
+  menu_component{nullptr}, world_component{nullptr}
 {
     world = new TileManager[world_height * world_width];
+
+    // order in which they appear
+    world_component= new component{0, (int)(ctx.screen_height * 0.1), ctx.screen_width, (int)(ctx.screen_height * 0.9)};
+    ctx.component_add(world_component);
+    menu_component = new component{0, 0, ctx.screen_width, (int)(ctx.screen_height * 0.1)};
+    ctx.component_add(menu_component);
 }
 
 WorldData::~WorldData()
@@ -191,6 +200,16 @@ void WorldData::tile_remove(int wx, int wy)
 
 void WorldData::tile_draw(int wx, int wy)
 {
+    // is the tile even on the screen?
+    ivec2 screen_coords = world_to_screen(wx, wy);
+    if (screen_coords.x + world[wy * world_width + wx].definition->worldsize.x * screen_tilesize.x > world_component->x + world_component->w ||
+        screen_coords.x < world_component->x ||
+        screen_coords.y + world[wy * world_width + wx].definition->worldsize.y * screen_tilesize.y > world_component->y + world_component->h ||
+        screen_coords.y < world_component->y)
+    {
+        return;
+    }
+
     if (wx < 0 || wx >= world_width || wy < 0 || wy >= world_height) {
         return;
     }
@@ -203,7 +222,7 @@ void WorldData::tile_draw(int wx, int wy)
     // The current coords are the lowest on screen, get the coords of the highest on screen
     // then calculate the offset of the top left corner of the tile image for drawing
     ivec2& dw = world[wy * world_width + wx].commander->drawer->world_coords;
-    ivec2 screen_coords = world_to_screen(dw.x, dw.y);
+    screen_coords = world_to_screen(dw.x, dw.y);
     int& id = world[dw.y * world_width + dw.x].definition->id;
 
     int& w  = screen_tilesize.x;
@@ -322,59 +341,93 @@ void WorldData::update()
         }
     }
 
-    if (mouse_selected.x >= 0 && mouse_selected.x < world_width && mouse_selected.y >= 0 && mouse_selected.y < world_height) {
-        ivec2 selected_screen = world_to_screen(mouse_selected.x, mouse_selected.y);
-        ctx.draw_image(TILE_HIGHLIGHT_MOUSE, SDL_Rect{ selected_screen.x, selected_screen.y, screen_tilesize.x, screen_tilesize.y });
-        //printf("Mouse: (%d, %d)\r", mouse_selected.x, mouse_selected.y);
-    }
-
     static int ox = 0;
     static int oy = 0;
     static int state = 0;
 
-    switch (state) {
-    case 0:
-        if (ctx.mouse.lclick) {
-            ox = mouse.x;
-            oy = mouse.y;
-            state = 1;
+    // if another item is above, world component's focus is reset
+    if (world_component->mouse_hovering) {
+        ivec2 screen_selected_tile = world_to_screen(mouse_selected.x, mouse_selected.y);
+        if (mouse_selected.x >= 0 && mouse_selected.x < world_width && mouse_selected.y >= 0 && mouse_selected.y < world_height) {
+            ctx.draw_image(TILE_HIGHLIGHT_MOUSE, SDL_Rect{ screen_selected_tile.x, screen_selected_tile.y, screen_tilesize.x, screen_tilesize.y });
+            //printf("Mouse: (%d, %d)\r", mouse_selected.x, mouse_selected.y);
         }
-        else {
-            ox = 0;
-            oy = 0;
-        }
-        break;
-    case 1:
-        if (ctx.mouse.lclick) {
-            // in bounds!
-            if (screen_offset.x + (mouse.x - ox) < (world_width - MAGIC_OFFSCREEN_MAX) * screen_tilesize.x &&
-                screen_offset.x + (mouse.x - ox) > -(world_width - MAGIC_OFFSCREEN_MAX) * screen_tilesize.x &&
-                screen_offset.y + (mouse.y - oy) < (world_height) * screen_tilesize.y &&
-                screen_offset.y + (mouse.y - oy) > -(world_height - MAGIC_OFFSCREEN_MAX) * screen_tilesize.y)
+
+        const int xzoomamt = 14;
+        const int yzoomamt = 7;
+        const int xmaxzoom = 240;
+        const int ymaxzoom = 120;
+        const int xminzoom = 44;
+        const int yminzoom = 22;
+        //ivec2 screen_zoomed_selected_tile = world_to_screen(mouse_selected.x, mouse_selected.y);
+
+        /* Zooming regularly occurs by stretching things further or closer to the origin. When the
+           screen is looking at the world far from the origin, (45, 45), a "zoom out" of 1 pixel
+           will cause the farthest tile to move 45 pixels and the (0, 0) coordinate to only be
+           stretched by 1 tile. Calculate this delta relative to the tile the mouse is currently
+           on, and where the tile moved to after the zoom. Change the world offset by those pixels. */
+
+        if (ctx.mouse.scrollup) {
+            if (screen_tilesize.x + xzoomamt < xmaxzoom && screen_tilesize.y + yzoomamt < ymaxzoom)
             {
-                screen_offset.add((mouse.x - ox), (mouse.y - oy));
-                ox = mouse.x;
-                oy = mouse.y;
+                screen_tilesize.add(xzoomamt, yzoomamt);
             }
         }
-        else {
-            ox = 0;
-            oy = 0;
-            state = 0;
+        if (ctx.mouse.scrolldown) {
+            if (screen_tilesize.x - xzoomamt > xminzoom && screen_tilesize.y - yzoomamt > yminzoom)
+            {
+                screen_tilesize.sub(xzoomamt, yzoomamt);
+            }
+        }
+        ivec2 screen_zoomed_selected_tile = world_to_screen(mouse_selected.x, mouse_selected.y);
+        screen_offset.add(screen_selected_tile.x - screen_zoomed_selected_tile.x, screen_selected_tile.y - screen_zoomed_selected_tile.y);
+
+        switch (state) {
+        case 0:
+            if (ctx.mouse.lclick) {
+                ox = mouse.x;
+                oy = mouse.y;
+                state = 1;
+            }
+            else {
+                ox = 0;
+                oy = 0;
+            }
+            break;
+        case 1:
+            if (ctx.mouse.lclick) {
+                // in bounds!
+                if (screen_offset.x + (mouse.x - ox) < (world_width - 1) * screen_tilesize.x &&
+                    screen_offset.x + (mouse.x - ox) > -(world_width) * screen_tilesize.x &&
+                    screen_offset.y + (mouse.y - oy) < (world_height - 1) * screen_tilesize.y &&
+                    screen_offset.y + (mouse.y - oy) > -(world_height) * screen_tilesize.y)
+                {
+                    screen_offset.add((mouse.x - ox), (mouse.y - oy));
+                    ox = mouse.x;
+                    oy = mouse.y;
+                }
+            }
+            else {
+                ox = 0;
+                oy = 0;
+                state = 0;
+            }
         }
     }
 
     if (ctx.check_key_invalidate(SDL_SCANCODE_SPACE)) {
         screen_offset = ivec2{0, 0};
     }
-    //printf("%d, %d\n", screen_offset.x, screen_offset.y);
+    printf("%d, %d\n", screen_offset.x, screen_offset.y);
+
+    ctx.draw_rect(Red, SDL_Rect{world_component->x, world_component->y, world_component->w, world_component->h});
 }
 
 WorldData *world;
 
 void simmil_setup(context& ctx)
 {
-    world = new WorldData(ctx, 10, 10);
+    world = new WorldData(ctx, 20, 20);
     world->setup();
 }
 

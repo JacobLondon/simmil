@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClInclude Include="src\modules.hpp" />
     <ClInclude Include="src\pse\colors.hpp" />
+    <ClInclude Include="src\pse\component.hpp" />
     <ClInclude Include="src\pse\ctx.hpp" />
     <ClInclude Include="src\pse\pse.hpp" />
     <ClInclude Include="src\pse\types.hpp" />
@@ -30,6 +31,7 @@
     <ClCompile Include="src\demo.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\mil.cpp" />
+    <ClCompile Include="src\pse\component.cpp" />
     <ClCompile Include="src\pse\ctx.cpp" />
     <ClCompile Include="src\pse\ctx_draw.cpp" />
     <ClCompile Include="src\pse\util.cpp" />

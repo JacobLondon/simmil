@@ -32,6 +32,9 @@
     <ClInclude Include="src\modules.hpp">
       <Filter>simmil</Filter>
     </ClInclude>
+    <ClInclude Include="src\pse\component.hpp">
+      <Filter>pse</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\pse\ctx.cpp">
@@ -51,6 +54,9 @@
     </ClCompile>
     <ClCompile Include="src\demo.cpp">
       <Filter>simmil</Filter>
+    </ClCompile>
+    <ClCompile Include="src\pse\component.cpp">
+      <Filter>pse</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

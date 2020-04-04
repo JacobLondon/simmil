@@ -74,9 +74,10 @@ void context::run(void (*setup)(context& ctx), void (*update)(context& ctx), voi
 
     setup(*this);
 
+    // program loop
     while (!done) {
         scroll_happened = false;
-        // keys
+        // event loop
         while (SDL_PollEvent(&event)) {
             switch (event.type) {
             case SDL_QUIT:
@@ -122,7 +123,7 @@ void context::run(void (*setup)(context& ctx), void (*update)(context& ctx), voi
             default:
                 break;
             }
-        }
+        } // end event loop
         if (!scroll_happened) {
             mouse.scrollup = false;
             mouse.scrolldown = false;
@@ -130,6 +131,41 @@ void context::run(void (*setup)(context& ctx), void (*update)(context& ctx), voi
         SDL_GetMouseState(&mouse.x, &mouse.y);
         SDL_PumpEvents();
         keystate = (unsigned char*)SDL_GetKeyboardState(NULL);
+
+        // component focus
+        int i;
+        for (i = 0; i < components.size(); i++) {
+            component *c = components[i];
+            if (c->focused) {
+                continue;
+            }
+
+            // determine focus
+            c->mouse_hovering = c->within(ivec2{mouse.x, mouse.y});
+            c->mouse_pressing = c->mouse_hovering && mouse.lclick;
+            // component started being pressed on / positive edge of click
+            if (c->mouse_pressing && !c->mouse_pressed) {
+                c->mouse_pressed = true;
+                c->focused = false;
+            }
+            // the mouse leaves the bounds
+            if (!c->mouse_hovering) {
+                c->mouse_pressed = false;
+            }
+            // negative edge of click
+            if (c->mouse_pressed && c->mouse_hovering && !mouse.lclick) {
+                c->mouse_pressed = false;
+                c->focused = true;
+            }
+        }
+
+        // reset focus on all panels beneath the top one
+        for (--i; i >= 0; i--) {
+            component *c = components[i];
+            if (c->focused) {
+                c->reset_focus();
+            }
+        }
 
         // drawing
         SDL_SetRenderDrawColor(renderer, Black.r, Black.g, Black.b, Black.a);
@@ -144,10 +180,9 @@ void context::run(void (*setup)(context& ctx), void (*update)(context& ctx), voi
         if (frame_time_target - frame_time > 0) {
             sleep_us(frame_time_target - frame_time);
         }
-
         frame_counter = (frame_counter + 1) % frame_target;
         delta_time = frame_time / US_PER_S;
-    }
+    } // end program loop
 
     if (cleanup) {
         cleanup(*this);
@@ -158,8 +193,12 @@ void context::run(void (*setup)(context& ctx), void (*update)(context& ctx), voi
 
 context::~context()
 {
-    for (auto t: textures)
+    for (int i = 0; i < components.size(); i++) {
+        delete components[i];
+    }
+    for (auto t: textures) {
         SDL_DestroyTexture(t);
+    }
     IMG_Quit();
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
@@ -181,6 +220,11 @@ bool context::check_key_invalidate(int sdl_scancode)
 void context::quit()
 {
     done = true;
+}
+
+void context::component_add(component *c)
+{
+    components.push_back(c);
 }
 
 void context::set_frame_target(size_t target)
