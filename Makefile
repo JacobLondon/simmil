@@ -1,4 +1,4 @@
-TARGET=pse
+TARGET=test
 DISTDIR=../simmil-dist
 CXX=g++
 CXXFLAGS=-std=c++17 -march=native -O2 -pipe -lSDL2 -lSDL2_image -Wall -Wextra

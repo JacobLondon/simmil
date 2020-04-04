@@ -6,7 +6,7 @@
 #include "types.hpp"
 
 namespace pse {
-
+  
 // 4:3
 #define PSE_RESOLUTION_43_640_480 640, 480
 #define PSE_RESOLUTION_43_800_600 800, 600
@@ -27,8 +27,9 @@ private:
     SDL_Event event = {0};
 public:
     std::vector<SDL_Texture *> textures{};
-
-    // input devices
+    std::vector<component> components{};
+    
+    // Input Devices
     struct {
         int x = 0;
         int y = 0;

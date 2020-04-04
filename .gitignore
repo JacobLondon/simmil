@@ -1,6 +1,7 @@
 .vs
 .vscode
 .DS_Store
+.directory
 
 # Visual Studio generated dirs
 x64/
