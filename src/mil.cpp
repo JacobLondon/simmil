@@ -71,6 +71,8 @@ struct WorldData {
     ivec2 screen_offset;
     int world_height; // grids of the world tall
     int world_width; // grids of the world wide
+    int world_hdiag;
+    int world_vdiag;
     component *menu_component; // managed by the context
     component *world_component; // managed by the context
 private:
@@ -90,9 +92,13 @@ public:
 };
 
 WorldData::WorldData(context& ctx, int height, int width)
-: ctx{ctx}, screen_tilesize{90, 45}, world_origin{width / 2, 1}, world_height(height), world_width(width),
+: ctx{ctx}, screen_tilesize{90, 45}, world_origin{width / 2, 1},
+  world_height{height}, world_width{width}, world_hdiag{0}, world_vdiag{0},
   menu_component{nullptr}, world_component{nullptr}
 {
+    world_hdiag = fast_sqrtf(world_width * world_width * 2);
+    world_vdiag = fast_sqrtf(world_height * world_height * 2);
+
     world = new TileManager[world_height * world_width];
 
     // order in which they appear
@@ -200,12 +206,14 @@ void WorldData::tile_remove(int wx, int wy)
 
 void WorldData::tile_draw(int wx, int wy)
 {
+    // ie. 2x2 -> 2
+    const int world_largest_tile = 2;
     // is the tile even on the screen?
     ivec2 screen_coords = world_to_screen(wx, wy);
-    if (screen_coords.x + world[wy * world_width + wx].definition->worldsize.x * screen_tilesize.x > world_component->x + world_component->w ||
-        screen_coords.x < world_component->x ||
-        screen_coords.y + world[wy * world_width + wx].definition->worldsize.y * screen_tilesize.y > world_component->y + world_component->h ||
-        screen_coords.y < world_component->y)
+    if (screen_coords.x + world[wy * world_width + wx].definition->worldsize.x * screen_tilesize.x > world_component->x + world_largest_tile * world_component->w ||
+        screen_coords.x < world_component->x - world_largest_tile * screen_tilesize.x ||
+        screen_coords.y + world[wy * world_width + wx].definition->worldsize.y * screen_tilesize.y > world_component->y + world_largest_tile * world_component->h ||
+        screen_coords.y < world_component->y - world_largest_tile * screen_tilesize.y)
     {
         return;
     }
@@ -397,10 +405,10 @@ void WorldData::update()
         case 1:
             if (ctx.mouse.lclick) {
                 // in bounds!
-                if (screen_offset.x + (mouse.x - ox) < (world_width - 1) * screen_tilesize.x &&
-                    screen_offset.x + (mouse.x - ox) > -(world_width) * screen_tilesize.x &&
-                    screen_offset.y + (mouse.y - oy) < (world_height - 1) * screen_tilesize.y &&
-                    screen_offset.y + (mouse.y - oy) > -(world_height) * screen_tilesize.y)
+                if (screen_offset.x + (mouse.x - ox) <  (world_hdiag / 2) * screen_tilesize.x &&
+                    screen_offset.x + (mouse.x - ox) > -(world_hdiag) * screen_tilesize.x &&
+                    screen_offset.y + (mouse.y - oy) <  (world_vdiag / 2) * screen_tilesize.y &&
+                    screen_offset.y + (mouse.y - oy) > -(world_vdiag) * screen_tilesize.y)
                 {
                     screen_offset.add((mouse.x - ox), (mouse.y - oy));
                     ox = mouse.x;
@@ -427,7 +435,7 @@ WorldData *world;
 
 void simmil_setup(context& ctx)
 {
-    world = new WorldData(ctx, 20, 20);
+    world = new WorldData(ctx, 30, 30);
     world->setup();
 }
 
