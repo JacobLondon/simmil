@@ -322,12 +322,6 @@ void WorldData::update()
         }
     }
 
-    /*for (int sum = 0; sum < world_width + world_height - 1; sum++) {
-        for (int wx = 0; wx <= sum; wx++) {
-            tile_draw(wx, sum - wx);
-        }
-    }*/
-
     if (mouse_selected.x >= 0 && mouse_selected.x < world_width && mouse_selected.y >= 0 && mouse_selected.y < world_height) {
         ivec2 selected_screen = world_to_screen(mouse_selected.x, mouse_selected.y);
         ctx.draw_image(TILE_HIGHLIGHT_MOUSE, SDL_Rect{ selected_screen.x, selected_screen.y, screen_tilesize.x, screen_tilesize.y });
@@ -370,13 +364,10 @@ void WorldData::update()
         }
     }
 
-    // TODO: Actually add a bounds checker
     if (ctx.check_key_invalidate(SDL_SCANCODE_SPACE)) {
         screen_offset = ivec2{0, 0};
     }
     //printf("%d, %d\n", screen_offset.x, screen_offset.y);
-
-    //ctx.draw_rect(Red, SDL_Rect{ mouse_cell.x * tile_size.x, mouse_cell.y * tile_size.y, tile_size.x, tile_size.y });
 }
 
 WorldData *world;
