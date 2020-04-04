@@ -46,13 +46,18 @@ TileDefinition::TileDefinition(TileName name, ivec3 size, int id)
 
 struct TileManager {
     TileDefinition *definition;
-    TileManager *owner;
+    /* Drawing can be complicated. The drawer has the coordinates
+       of where to draw, but you can only draw once you get to
+       the coordinates of the tile closest to the bottom of the
+       screen. Keep track of who is where. */
+    TileManager *drawer; // the one who can draw, closest to the top of the screen
+    TileManager *commander; // the one who commands the drawer, closest to bottom of screen
     ivec2 world_coords;
     TileManager();
 };
 
 TileManager::TileManager()
-: definition{nullptr}, owner{nullptr}, world_coords{}
+: definition{nullptr}, drawer{nullptr}, commander{nullptr}, world_coords{}
 {
 
 }
@@ -127,7 +132,7 @@ void WorldData::tile_place(TileName name, int wx, int wy)
     // ensure all tiles in the shape of the object are the default definition
     for (int i = wy; i < wy + definitions[name].worldsize.y; i++) {
         for (int j = wx; j < wx + definitions[name].worldsize.x; j++) {
-            if (world[wy * world_width + wx].definition != nullptr &&
+            if (world[i * world_width + j].definition != nullptr &&
                 world[i * world_width + j].definition != defaultdef)
             {
                 return;
@@ -135,16 +140,18 @@ void WorldData::tile_place(TileName name, int wx, int wy)
         }
     }
 
-    // assign owner tile
-    TileManager *owner = &world[wy * world_width + wx];
-    owner->definition = &definitions[name];
-    owner->owner = owner;
+    // assign drawer tile
+    TileManager *drawer = &world[wy * world_width + wx];
+    drawer->definition = &definitions[name];
+    drawer->drawer = drawer;
 
     // assign all tiles in the shape of the object who they belong to and what they are
-    for (int i = wy; i < wy + owner->definition->worldsize.y; i++) {
-        for (int j = wx; j < wx + owner->definition->worldsize.x; j++) {
-            world[i * world_width + j].definition = owner->definition;
-            world[i * world_width + j].owner = owner->owner;
+    for (int i = wy; i < wy + drawer->definition->worldsize.y; i++) {
+        for (int j = wx; j < wx + drawer->definition->worldsize.x; j++) {
+            world[i * world_width + j].definition = drawer->definition;
+            world[i * world_width + j].drawer = drawer->drawer;
+            world[i * world_width + j].commander = &world[(wy + drawer->definition->worldsize.y - 1) * world_width + (wx + drawer->definition->worldsize.x - 1)];
+            world[i * world_width + j].world_coords = ivec2{j, i};
         }
     }
 
@@ -167,15 +174,17 @@ void WorldData::tile_remove(int wx, int wy)
         return;
     }
 
-    // get the owner tile
-    TileManager *owner = world[wy * world_width + wx].owner;
+    // get the drawer tile
+    TileManager *drawer = world[wy * world_width + wx].drawer;
 
     // clear all assigned tiles to default tile manually
-    for (int i = owner->world_coords.y; i < owner->world_coords.y + owner->definition->worldsize.y; i++) {
-        for (int j = owner->world_coords.x; j < owner->world_coords.x + owner->definition->worldsize.x; j++) {
-            // tiles becomes its own owner
-            world[i * world_width + j].owner = &world[i * world_width + j];
+    for (int i = drawer->world_coords.y; i < drawer->world_coords.y + drawer->definition->worldsize.y; i++) {
+        for (int j = drawer->world_coords.x; j < drawer->world_coords.x + drawer->definition->worldsize.x; j++) {
+            // tiles becomes its own drawer and commander
+            world[i * world_width + j].drawer = &world[i * world_width + j];
             world[i * world_width + j].definition = defaultdef;
+            world[i * world_width + j].commander = &world[i * world_width + j];
+            world[i * world_width + j].world_coords = ivec2{j, i};
         }
     }
 }
@@ -186,18 +195,22 @@ void WorldData::tile_draw(int wx, int wy)
         return;
     }
 
-    // don't draw the tile if it is not the owner
-    if (&world[wy * world_width + wx] != world[wy * world_width + wx].owner) {
+    // don't draw the tile if it is not the commander
+    if (&world[wy * world_width + wx] != world[wy * world_width + wx].commander) {
         return;
     }
 
-    ivec2 screen_coords = world_to_screen(wx, wy);
-    int& id = world[wy * world_width + wx].definition->id;
+    // The current coords are the lowest on screen, get the coords of the highest on screen
+    // then calculate the offset of the top left corner of the tile image for drawing
+    ivec2& dw = world[wy * world_width + wx].commander->drawer->world_coords;
+    ivec2 screen_coords = world_to_screen(dw.x, dw.y);
+    int& id = world[dw.y * world_width + dw.x].definition->id;
+
     int& w  = screen_tilesize.x;
     int& h  = screen_tilesize.y;
-    int& gx = world[wy * world_width + wx].definition->worldsize.x;
-    int& gy = world[wy * world_width + wx].definition->worldsize.y;
-    int& gz = world[wy * world_width + wx].definition->worldsize.z;
+    int& gx = world[dw.y * world_width + dw.x].definition->worldsize.x;
+    int& gy = world[dw.y * world_width + dw.x].definition->worldsize.y;
+    int& gz = world[dw.y * world_width + dw.x].definition->worldsize.z;
 
     int sx = screen_coords.x - w / 2 * gy + w / 2;
     int sy = screen_coords.y - (gz - 1) * h / 2;
