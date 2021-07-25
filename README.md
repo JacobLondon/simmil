@@ -1,6 +1,12 @@
 # simmil
 [SDL2-2.0.10](https://www.libsdl.org/)
 for Linux and Visual Studio 2019
+
+# Examples
+![Screenshot](https://user-images.githubusercontent.com/17059471/126886608-7d2937fc-3b30-45af-bb0a-ccef7f86c52b.png)
+
+Click + drag to move, space to reset position, scroll wheel to zoom in and out. Rendered area is the red box.
+
 # Building & Dependencies
 ## Linux
 ```
